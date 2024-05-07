@@ -127,9 +127,15 @@ class _LoginViewState extends State<LoginView> {
                             type: ToastificationType.success,
                             style: ToastificationStyle.flatColored,
                             context: context,
-                            title: Text('Berhasil Login!'),
+                            title: Text(
+                              'Sukses!',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            description: Text('Selamat, kamu berhasil login!'),
                             showProgressBar: true,
-                            autoCloseDuration: const Duration(seconds: 3),
+                            // autoCloseDuration: const Duration(seconds: 3),
                           );
 
                           await Future.delayed(
@@ -140,9 +146,15 @@ class _LoginViewState extends State<LoginView> {
                             type: ToastificationType.error,
                             style: ToastificationStyle.flatColored,
                             context: context,
-                            title: Text('Gagal Login!'),
+                            title: Text(
+                              'Gagal Login!',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            description: Text('Email dan password harus benar'),
                             showProgressBar: true,
-                            autoCloseDuration: const Duration(seconds: 3),
+                            // autoCloseDuration: const Duration(seconds: 3),
                           );
 
                           await Future.delayed(
