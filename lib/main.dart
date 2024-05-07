@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:toastification/toastification.dart';
 
 void main() {
   runApp(ProviderScope(child: const MainApp()));
@@ -44,9 +45,11 @@ class MainApp extends StatelessWidget {
                 width: 100.w,
                 height: 12.5.h,
               );
-        return MaterialApp(
-          theme: theme,
-          home: const LoginView(),
+        return ToastificationWrapper(
+          child: MaterialApp(
+            theme: theme,
+            home: const LoginView(),
+          ),
         );
       },
     );
