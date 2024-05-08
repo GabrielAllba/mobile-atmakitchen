@@ -74,9 +74,23 @@ class _LoginViewState extends State<LoginView> {
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
-                    decoration: const InputDecoration(
-                        hintText: 'Masukan Email',
-                        prefixIcon: Icon(Icons.email_outlined)),
+                    decoration: InputDecoration(
+                      hintText: 'Masukan Email',
+                      prefixIcon: const Icon(Icons.email_outlined),
+                      labelText: 'Email',
+                      labelStyle: const TextStyle(color: Colors.black),
+                      border: OutlineInputBorder(
+                        borderSide: const BorderSide(color: Colors.black),
+                        borderRadius: BorderRadius.circular(100),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(100),
+                        borderSide: const BorderSide(
+                          color: Color.fromARGB(255, 0, 0, 0),
+                          width: 2.0,
+                        ),
+                      ),
+                    ),
                     validator: (String? value) {
                       if (value == null || value.isEmpty) {
                         return 'Email harus diisi';
@@ -93,6 +107,19 @@ class _LoginViewState extends State<LoginView> {
                       decoration: InputDecoration(
                           hintText: 'Password',
                           prefixIcon: const Icon(Icons.password_outlined),
+                          labelText: 'Password',
+                          labelStyle: const TextStyle(color: Colors.black),
+                          border: OutlineInputBorder(
+                            borderSide: const BorderSide(color: Colors.black),
+                            borderRadius: BorderRadius.circular(100),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(100),
+                            borderSide: const BorderSide(
+                              color: Color.fromARGB(255, 0, 0, 0),
+                              width: 2.0,
+                            ),
+                          ),
                           suffixIcon: IconButton(
                             icon: Icon(
                               _obscurePassword
