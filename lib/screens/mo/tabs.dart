@@ -72,7 +72,7 @@ class _MoTabsScreenState extends State<MoTabsScreen> {
         bottomNavigationBar: BottomNavigationBar(
           currentIndex: _selectedPageIndex,
           onTap: _selectPage,
-          fixedColor: Theme.of(context).primaryColor,
+          fixedColor: const Color.fromARGB(255, 43, 57, 164),
           items: const [
             BottomNavigationBarItem(
               icon: Icon(Icons.home_outlined),

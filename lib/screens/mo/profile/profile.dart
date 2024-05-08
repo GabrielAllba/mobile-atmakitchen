@@ -20,7 +20,7 @@ class _MoProfileState extends State<MoProfile> {
             children: [
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color.fromARGB(255, 170, 43, 43),
+                  backgroundColor: const Color.fromARGB(255, 255, 229, 1),
                   minimumSize: const Size(double.infinity, 50),
                 ),
                 onPressed: () async {
@@ -29,15 +29,14 @@ class _MoProfileState extends State<MoProfile> {
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => LoginView(),
+                      builder: (context) => LoginView(), // Replace LoginScreen
                     ),
                   );
                 },
                 child: const Text(
                   'Logout',
                   style: TextStyle(
-                    color: Colors.white,
-                  ),
+                      color: Colors.black, fontWeight: FontWeight.bold),
                 ),
               ),
             ],
