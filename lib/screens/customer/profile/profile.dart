@@ -20,6 +20,7 @@ class _CustomerProfileState extends State<CustomerProfile> {
   TextEditingController birthDateController = TextEditingController();
   TextEditingController usernameController = TextEditingController();
   TextEditingController phoneNumberController = TextEditingController();
+  int totalPoint = 0;
   DateTime? selectedDate;
 
   @override
@@ -173,7 +174,7 @@ class _CustomerProfileState extends State<CustomerProfile> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Total Point : 50',
+                      'Total Point : ' + totalPoint.toString(),
                       style: GoogleFonts.poppins(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
@@ -228,14 +229,18 @@ class _CustomerProfileState extends State<CustomerProfile> {
     if (userJson != null) {
       Map<String, dynamic> userData = json.decode(userJson);
       print(userData);
-      setState(() {
-        usernameController.value = TextEditingValue(text: userData["username"]);
-        emailController.value = TextEditingValue(text: userData["email"]);
-        phoneNumberController.value =
-            TextEditingValue(text: userData["phone_number"]);
-        birthDateController.value =
-            TextEditingValue(text: userData["born_date"]);
-      });
+      setState(
+        () {
+          usernameController.value =
+              TextEditingValue(text: userData["username"]);
+          emailController.value = TextEditingValue(text: userData["email"]);
+          phoneNumberController.value =
+              TextEditingValue(text: userData["phone_number"]);
+          birthDateController.value =
+              TextEditingValue(text: userData["born_date"]);
+          totalPoint = userData["total_point"];
+        },
+      );
     }
   }
 }
