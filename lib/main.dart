@@ -10,14 +10,16 @@ void main() {
 }
 
 final theme = ThemeData(
-    useMaterial3: true,
-    colorScheme: ColorScheme.fromSeed(
-      brightness: Brightness.light,
-      seedColor: const Color.fromARGB(255, 42, 122, 255),
-      primary: const Color.fromARGB(255, 42, 122, 255),
-      secondary: const Color.fromARGB(255, 255, 74, 24),
-    ),
-    textTheme: GoogleFonts.poppinsTextTheme());
+  useMaterial3: true,
+  colorScheme: ColorScheme.fromSeed(
+    brightness: Brightness.light,
+    seedColor: const Color.fromARGB(255, 42, 122, 255),
+    primary: const Color.fromARGB(255, 42, 122, 255),
+    secondary: const Color.fromARGB(255, 255, 74, 24),
+  ),
+  textTheme: GoogleFonts.poppinsTextTheme(),
+  scaffoldBackgroundColor: Color.fromARGB(255, 255, 255, 255),
+);
 
 class MainApp extends StatelessWidget {
   const MainApp({super.key});

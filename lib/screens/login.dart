@@ -1,7 +1,10 @@
 import 'dart:convert';
 
 import 'package:atma_kitchen/client/AuthClient.dart';
+import 'package:atma_kitchen/client/RoleClient.dart';
 import 'package:atma_kitchen/models/user.dart';
+import 'package:atma_kitchen/screens/customer/tabs.dart';
+import 'package:atma_kitchen/screens/mo/tabs.dart';
 import 'package:flutter/material.dart';
 import 'package:toastification/toastification.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -25,25 +28,20 @@ class _LoginViewState extends State<LoginView> {
   }
 
   Future<Response> login() async {
-    print("object");
     try {
       Response res = await AuthClient.login(
         emailController.text,
         passwordController.text,
       );
-      print("asdfadsfasdf");
-      print(res);
       return res;
     } catch (err) {
-      print("error bang");
       return Response(err.toString(), 400);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    bool _obscurePassword =
-        true; // State variable to toggle password visibility
+    bool _obscurePassword = true;
 
     return Scaffold(
       body: SafeArea(
@@ -56,19 +54,29 @@ class _LoginViewState extends State<LoginView> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
+                  CircleAvatar(
+                    radius: 50,
+                    backgroundColor: Colors.white,
+                    child: Image.asset(
+                      'images/logo.jpg',
+                      width: 80,
+                      height: 80,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   Text(
                     'Atma Kitchen',
                     style: GoogleFonts.poppins(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: const Color.fromARGB(255, 170, 43, 43),
+                      color: Color.fromARGB(255, 0, 0, 0),
                     ),
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
                     decoration: const InputDecoration(
-                      hintText: 'Masukan Email',
-                    ),
+                        hintText: 'Masukan Email',
+                        prefixIcon: Icon(Icons.email_outlined)),
                     validator: (String? value) {
                       if (value == null || value.isEmpty) {
                         return 'Email harus diisi';
@@ -84,11 +92,12 @@ class _LoginViewState extends State<LoginView> {
                       obscureText: _obscurePassword,
                       decoration: InputDecoration(
                           hintText: 'Password',
+                          prefixIcon: const Icon(Icons.password_outlined),
                           suffixIcon: IconButton(
                             icon: Icon(
                               _obscurePassword
-                                  ? Icons.visibility
-                                  : Icons.visibility_off,
+                                  ? Icons.visibility_outlined
+                                  : Icons.visibility_off_outlined,
                             ),
                             onPressed: () {
                               setState(() {
@@ -107,10 +116,8 @@ class _LoginViewState extends State<LoginView> {
                   const SizedBox(height: 16),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color.fromARGB(
-                          255, 170, 43, 43), // Background color
-                      minimumSize:
-                          const Size(double.infinity, 50), // Full width button
+                      backgroundColor: const Color.fromARGB(255, 255, 229, 1),
+                      minimumSize: const Size(double.infinity, 50),
                     ),
                     onPressed: () async {
                       if (_formKey.currentState!.validate()) {
@@ -121,26 +128,8 @@ class _LoginViewState extends State<LoginView> {
                           Map<String, dynamic> userData = responseData['user'];
 
                           User user = User.fromJson(userData);
-                          saveUser(user);
-
-                          toastification.show(
-                            type: ToastificationType.success,
-                            style: ToastificationStyle.flatColored,
-                            context: context,
-                            title: Text(
-                              'Sukses!',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            description: Text('Selamat, kamu berhasil login!'),
-                            showProgressBar: true,
-                            // autoCloseDuration: const Duration(seconds: 3),
-                          );
-
-                          await Future.delayed(
-                            const Duration(seconds: 2),
-                          );
+                          await saveUser(user);
+                          await navigateTo(context);
                         } else {
                           toastification.show(
                             type: ToastificationType.error,
@@ -154,7 +143,7 @@ class _LoginViewState extends State<LoginView> {
                             ),
                             description: Text('Email dan password harus benar'),
                             showProgressBar: true,
-                            // autoCloseDuration: const Duration(seconds: 3),
+                            autoCloseDuration: const Duration(seconds: 5),
                           );
 
                           await Future.delayed(
@@ -166,8 +155,7 @@ class _LoginViewState extends State<LoginView> {
                     child: const Text(
                       'Login',
                       style: TextStyle(
-                        color: Colors.white,
-                      ), // Set text color to white
+                          color: Colors.black, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ],
@@ -194,6 +182,101 @@ Future<void> printSavedUser() async {
   if (userJson != null) {
     Map<String, dynamic> userData = json.decode(userJson);
     print(userData);
-    print(userData['password']);
+  }
+}
+
+Future<void> navigateTo(BuildContext context) async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  String? userJson = prefs.getString('user');
+  if (userJson != null) {
+    Map<String, dynamic> userData = json.decode(userJson);
+    print(userData["role_id"]);
+    Response res = await RoleClient.getById(userData["role_id"]);
+    Map<String, dynamic> role = json.decode(res.body);
+    String role_name = role["role"]["name"];
+
+    if (role_name == "Admin") {
+      toastification.show(
+        type: ToastificationType.error,
+        style: ToastificationStyle.flatColored,
+        context: context,
+        title: Text(
+          'Gagal Login!',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        description: Text('Kamu tidak bisa login!'),
+        showProgressBar: true,
+        autoCloseDuration: const Duration(seconds: 5),
+      );
+    } else if (role_name == "Customer") {
+      toastification.show(
+        type: ToastificationType.success,
+        style: ToastificationStyle.flatColored,
+        context: context,
+        title: Text(
+          'Sukses!',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        description: Text('Selamat, kamu berhasil login!'),
+        showProgressBar: true,
+        autoCloseDuration: const Duration(seconds: 5),
+      );
+
+      await Future.delayed(
+        const Duration(seconds: 2),
+      );
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const CustomerTabsScreen(),
+        ),
+      );
+    } else if (role_name == "Manajer Operasional") {
+      toastification.show(
+        type: ToastificationType.success,
+        style: ToastificationStyle.flatColored,
+        context: context,
+        title: Text(
+          'Sukses!',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        description: Text('Selamat, kamu berhasil login!'),
+        showProgressBar: true,
+        autoCloseDuration: const Duration(seconds: 5),
+      );
+
+      await Future.delayed(
+        const Duration(seconds: 2),
+      );
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const MoTabsScreen(),
+        ),
+      );
+    } else if (role_name == "Owner") {
+      toastification.show(
+        type: ToastificationType.error,
+        style: ToastificationStyle.flatColored,
+        context: context,
+        title: Text(
+          'Gagal Login!',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        description: Text('Kamu tidak bisa login!'),
+        showProgressBar: true,
+        autoCloseDuration: const Duration(seconds: 5),
+      );
+    }
   }
 }
