@@ -1,5 +1,6 @@
 import 'package:atma_kitchen/screens/customer/home.dart';
 import 'package:atma_kitchen/screens/customer/profile/profile.dart';
+import 'package:atma_kitchen/screens/customer/saldo/saldo.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
@@ -61,7 +62,7 @@ class _CustomerTabsScreenState extends State<CustomerTabsScreen> {
       if (_selectedPageIndex == 0) {
         activePage = const CustomerHome();
       } else if (_selectedPageIndex == 1) {
-        activePage = const CustomerHome();
+        activePage = const CustomerSaldo();
       } else if (_selectedPageIndex == 2) {
         activePage = const CustomerProfile();
       }
@@ -79,7 +80,7 @@ class _CustomerTabsScreenState extends State<CustomerTabsScreen> {
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.book_outlined),
-              label: 'Pemesanan',
+              label: 'Saldo',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.group_add_outlined),
