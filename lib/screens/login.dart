@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:atma_kitchen/client/AuthClient.dart';
 import 'package:atma_kitchen/client/RoleClient.dart';
 import 'package:atma_kitchen/models/user.dart';
@@ -22,7 +21,9 @@ class _LoginViewState extends State<LoginView> {
   final _formKey = GlobalKey<FormState>();
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
+  bool _obscurePassword = true;
 
+  @override
   void initState() {
     super.initState();
   }
@@ -41,8 +42,6 @@ class _LoginViewState extends State<LoginView> {
 
   @override
   Widget build(BuildContext context) {
-    bool _obscurePassword = true;
-
     return Scaffold(
       body: SafeArea(
         child: Center(
@@ -197,32 +196,45 @@ class _LoginViewState extends State<LoginView> {
 
 Future<void> saveUser(User user) async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
-  String userJson = user.toRawJson();
-  await prefs.setString('user', userJson);
-  await printSavedUser();
+  // Handling nullable user.id
+  int userId = user.id ?? 0; // Default to 0 if user.id is null
+  await prefs.setInt('id', userId); // Save user ID
+  String userJson = json.encode(user.toJson()); // Assuming toJson() method exists in User model
+  await prefs.setString('user', userJson); // Save user data as JSON string
+  await printSavedUser(); // Optional: Print saved user data for debugging
 }
+
+
 
 Future<void> printSavedUser() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
   String? userJson = prefs.getString('user');
+  int? userId = prefs.getInt('id');
 
   if (userJson != null) {
     Map<String, dynamic> userData = json.decode(userJson);
-    print(userData);
+    print('User Data: $userData');
+  }
+
+  if (userId != null) {
+    print('User ID: $userId');
   }
 }
 
 Future<void> navigateTo(BuildContext context) async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
   String? userJson = prefs.getString('user');
+  print('User JSON: $userJson'); // Tambahkan pernyataan print untuk debug
   if (userJson != null) {
     Map<String, dynamic> userData = json.decode(userJson);
-    print(userData["role_id"]);
+    print('User Data: $userData'); // Tambahkan pernyataan print untuk debug
+    print('User Role ID: ${userData["role_id"]}'); // Tambahkan pernyataan print untuk debug
     Response res = await RoleClient.getById(userData["role_id"]);
     Map<String, dynamic> role = json.decode(res.body);
-    String role_name = role["role"]["name"];
+    String roleName = role["role"]["name"];
+    print('Role Name: $roleName'); // Tambahkan pernyataan print untuk debug
 
-    if (role_name == "Admin") {
+    if (roleName == "Admin" || roleName == "Owner") {
       toastification.show(
         type: ToastificationType.error,
         style: ToastificationStyle.flatColored,
@@ -237,7 +249,7 @@ Future<void> navigateTo(BuildContext context) async {
         showProgressBar: true,
         autoCloseDuration: const Duration(seconds: 5),
       );
-    } else if (role_name == "Customer") {
+    } else if (roleName == "Customer") {
       toastification.show(
         type: ToastificationType.success,
         style: ToastificationStyle.flatColored,
@@ -257,13 +269,13 @@ Future<void> navigateTo(BuildContext context) async {
         const Duration(seconds: 2),
       );
 
-      Navigator.push(
+      Navigator.pushReplacement( // Menggunakan pushReplacement agar tidak bisa kembali ke halaman login dengan tombol back
         context,
         MaterialPageRoute(
           builder: (_) => const CustomerTabsScreen(),
         ),
       );
-    } else if (role_name == "Manajer Operasional") {
+    } else if (roleName == "Manajer Operasional") {
       toastification.show(
         type: ToastificationType.success,
         style: ToastificationStyle.flatColored,
@@ -283,26 +295,11 @@ Future<void> navigateTo(BuildContext context) async {
         const Duration(seconds: 2),
       );
 
-      Navigator.push(
+      Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           builder: (_) => const MoTabsScreen(),
         ),
-      );
-    } else if (role_name == "Owner") {
-      toastification.show(
-        type: ToastificationType.error,
-        style: ToastificationStyle.flatColored,
-        context: context,
-        title: Text(
-          'Gagal Login!',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        description: Text('Kamu tidak bisa login!'),
-        showProgressBar: true,
-        autoCloseDuration: const Duration(seconds: 5),
       );
     }
   }
