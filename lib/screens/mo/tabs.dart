@@ -1,4 +1,3 @@
-import 'package:atma_kitchen/screens/customer/home.dart';
 import 'package:atma_kitchen/screens/mo/home.dart';
 import 'package:atma_kitchen/screens/mo/profile/profile.dart';
 import 'package:flutter/material.dart';
