@@ -1,14 +1,14 @@
 import 'dart:convert';
-import 'package:atma_kitchen/client/AuthClient.dart';
-import 'package:atma_kitchen/client/RoleClient.dart';
-import 'package:atma_kitchen/models/user.dart';
-import 'package:atma_kitchen/screens/customer/tabs.dart';
-import 'package:atma_kitchen/screens/mo/tabs.dart';
 import 'package:flutter/material.dart';
-import 'package:toastification/toastification.dart';
+import 'package:http/http.dart' as http;
 import 'package:google_fonts/google_fonts.dart';
-import 'package:http/http.dart';
+import 'package:toastification/toastification.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:atma_kitchen/client/AuthClient.dart'; // Pastikan import AuthClient sudah sesuai dengan struktur proyek Anda
+import 'package:atma_kitchen/client/RoleClient.dart'; // Pastikan import RoleClient sudah sesuai dengan struktur proyek Anda
+import 'package:atma_kitchen/models/user.dart'; // Pastikan import model User sudah sesuai dengan struktur proyek Anda
+import 'package:atma_kitchen/screens/customer/tabs.dart'; // Sesuaikan dengan lokasi tabs untuk customer
+import 'package:atma_kitchen/screens/mo/tabs.dart'; // Sesuaikan dengan lokasi tabs untuk manajer operasional
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -23,20 +23,119 @@ class _LoginViewState extends State<LoginView> {
   TextEditingController passwordController = TextEditingController();
   bool _obscurePassword = true;
 
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  Future<Response> login() async {
+  Future<http.Response> login() async {
     try {
-      Response res = await AuthClient.login(
+      final response = await AuthClient.login(
         emailController.text,
         passwordController.text,
       );
-      return res;
+      return response;
     } catch (err) {
-      return Response(err.toString(), 400);
+      return http.Response(err.toString(), 400);
+    }
+  }
+
+  Future<void> saveUser(User user) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    int userId = user.id ?? 0;
+    await prefs.setInt('id', userId);
+    String userJson = json.encode(user.toJson());
+    await prefs.setString('user', userJson);
+    await printSavedUser();
+  }
+
+  Future<void> printSavedUser() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? userJson = prefs.getString('user');
+    int? userId = prefs.getInt('id');
+
+    if (userJson != null) {
+      Map<String, dynamic> userData = json.decode(userJson);
+      print('User Data: $userData');
+    }
+
+    if (userId != null) {
+      print('User ID: $userId');
+    }
+  }
+
+  Future<void> navigateTo(BuildContext context) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? userJson = prefs.getString('user');
+    if (userJson != null) {
+      Map<String, dynamic> userData = json.decode(userJson);
+      http.Response res = await RoleClient.getById(userData["role_id"]);
+      Map<String, dynamic> role = json.decode(res.body);
+      String roleName = role["role"]["name"];
+
+      if (roleName == "Admin" || roleName == "Owner") {
+        toastification.show(
+          type: ToastificationType.error,
+          style: ToastificationStyle.flatColored,
+          context: context,
+          title: Text(
+            'Gagal Login!',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          description: Text('Kamu tidak bisa login!'),
+          showProgressBar: true,
+          autoCloseDuration: const Duration(seconds: 5),
+        );
+      } else if (roleName == "Customer") {
+        toastification.show(
+          type: ToastificationType.success,
+          style: ToastificationStyle.flatColored,
+          context: context,
+          title: Text(
+            'Sukses!',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          description: Text('Selamat, kamu berhasil login!'),
+          showProgressBar: true,
+          autoCloseDuration: const Duration(seconds: 5),
+        );
+
+        await Future.delayed(
+          const Duration(seconds: 2),
+        );
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const CustomerTabsScreen(),
+          ),
+        );
+      } else if (roleName == "Manajer Operasional") {
+        toastification.show(
+          type: ToastificationType.success,
+          style: ToastificationStyle.flatColored,
+          context: context,
+          title: Text(
+            'Sukses!',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          description: Text('Selamat, kamu berhasil login!'),
+          showProgressBar: true,
+          autoCloseDuration: const Duration(seconds: 5),
+        );
+
+        await Future.delayed(
+          const Duration(seconds: 2),
+        );
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const MoTabsScreen(),
+          ),
+        );
+      }
     }
   }
 
@@ -98,7 +197,7 @@ class _LoginViewState extends State<LoginView> {
                     },
                     controller: emailController,
                   ),
-                  const SizedBox(height: 16), // Add some spacing between fields
+                  const SizedBox(height: 16),
                   StatefulBuilder(builder: (context, setState) {
                     return TextFormField(
                       controller: passwordController,
@@ -147,7 +246,7 @@ class _LoginViewState extends State<LoginView> {
                     ),
                     onPressed: () async {
                       if (_formKey.currentState!.validate()) {
-                        Response res = await login();
+                        http.Response res = await login();
 
                         if (res.statusCode == 200) {
                           var responseData = json.decode(res.body);
@@ -184,6 +283,18 @@ class _LoginViewState extends State<LoginView> {
                           color: Colors.black, fontWeight: FontWeight.bold),
                     ),
                   ),
+                  const SizedBox(height: 16),
+                  TextButton(
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return ResetPasswordDialog();
+                        },
+                      );
+                    },
+                    child: Text('Lupa Password?'),
+                  ),
                 ],
               ),
             ),
@@ -194,113 +305,116 @@ class _LoginViewState extends State<LoginView> {
   }
 }
 
-Future<void> saveUser(User user) async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  // Handling nullable user.id
-  int userId = user.id ?? 0; // Default to 0 if user.id is null
-  await prefs.setInt('id', userId); // Save user ID
-  String userJson = json.encode(user.toJson()); // Assuming toJson() method exists in User model
-  await prefs.setString('user', userJson); // Save user data as JSON string
-  await printSavedUser(); // Optional: Print saved user data for debugging
+class ResetPasswordDialog extends StatefulWidget {
+  @override
+  _ResetPasswordDialogState createState() => _ResetPasswordDialogState();
 }
 
+class _ResetPasswordDialogState extends State<ResetPasswordDialog> {
+  final _emailController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
 
-
-Future<void> printSavedUser() async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  String? userJson = prefs.getString('user');
-  int? userId = prefs.getInt('id');
-
-  if (userJson != null) {
-    Map<String, dynamic> userData = json.decode(userJson);
-    print('User Data: $userData');
-  }
-
-  if (userId != null) {
-    print('User ID: $userId');
-  }
-}
-
-Future<void> navigateTo(BuildContext context) async {
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  String? userJson = prefs.getString('user');
-  print('User JSON: $userJson'); // Tambahkan pernyataan print untuk debug
-  if (userJson != null) {
-    Map<String, dynamic> userData = json.decode(userJson);
-    print('User Data: $userData'); // Tambahkan pernyataan print untuk debug
-    print('User Role ID: ${userData["role_id"]}'); // Tambahkan pernyataan print untuk debug
-    Response res = await RoleClient.getById(userData["role_id"]);
-    Map<String, dynamic> role = json.decode(res.body);
-    String roleName = role["role"]["name"];
-    print('Role Name: $roleName'); // Tambahkan pernyataan print untuk debug
-
-    if (roleName == "Admin" || roleName == "Owner") {
+  Future<void> sendResetPasswordEmail(String email) async {
+    try {
+      final response = await AuthClient.sendResetEmail(email);
+      if (response.statusCode == 200) {
+        Navigator.of(context).pop();
+        toastification.show(
+          type: ToastificationType.success,
+          style: ToastificationStyle.flatColored,
+          context: context,
+          title: Text(
+            'Sukses!',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          description: Text('Email reset password berhasil dikirim!'),
+          showProgressBar: true,
+          autoCloseDuration: const Duration(seconds: 5),
+        );
+      } else {
+        toastification.show(
+          type: ToastificationType.error,
+          style: ToastificationStyle.flatColored,
+          context: context,
+          title: Text(
+            'Gagal!',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          description: Text('Gagal mengirim email reset password'),
+          showProgressBar: true,
+          autoCloseDuration: const Duration(seconds: 5),
+        );
+      }
+    } catch (error) {
       toastification.show(
         type: ToastificationType.error,
         style: ToastificationStyle.flatColored,
         context: context,
         title: Text(
-          'Gagal Login!',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
+          'Error!',
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        description: Text('Kamu tidak bisa login!'),
+        description: Text('Terjadi kesalahan, coba lagi nanti: $error'),
         showProgressBar: true,
         autoCloseDuration: const Duration(seconds: 5),
-      );
-    } else if (roleName == "Customer") {
-      toastification.show(
-        type: ToastificationType.success,
-        style: ToastificationStyle.flatColored,
-        context: context,
-        title: Text(
-          'Sukses!',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        description: Text('Selamat, kamu berhasil login!'),
-        showProgressBar: true,
-        autoCloseDuration: const Duration(seconds: 5),
-      );
-
-      await Future.delayed(
-        const Duration(seconds: 2),
-      );
-
-      Navigator.pushReplacement( // Menggunakan pushReplacement agar tidak bisa kembali ke halaman login dengan tombol back
-        context,
-        MaterialPageRoute(
-          builder: (_) => const CustomerTabsScreen(),
-        ),
-      );
-    } else if (roleName == "Manajer Operasional") {
-      toastification.show(
-        type: ToastificationType.success,
-        style: ToastificationStyle.flatColored,
-        context: context,
-        title: Text(
-          'Sukses!',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        description: Text('Selamat, kamu berhasil login!'),
-        showProgressBar: true,
-        autoCloseDuration: const Duration(seconds: 5),
-      );
-
-      await Future.delayed(
-        const Duration(seconds: 2),
-      );
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => const MoTabsScreen(),
-        ),
       );
     }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('Reset Password'),
+      content: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextFormField(
+              controller: _emailController,
+              decoration: InputDecoration(
+                hintText: 'Masukan Email',
+                prefixIcon: const Icon(Icons.email_outlined),
+                labelText: 'Email',
+                labelStyle: const TextStyle(color: Colors.black),
+                border: OutlineInputBorder(
+                  borderSide: const BorderSide(color: Colors.black),
+                  borderRadius: BorderRadius.circular(100),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(100),
+                  borderSide: const BorderSide(
+                    color: Color.fromARGB(255, 0, 0, 0),
+                    width: 2.0,
+                  ),
+                ),
+              ),
+              validator: (String? value) {
+                if (value == null || value.isEmpty) {
+                  return 'Email harus diisi';
+                }
+                return null;
+              },
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+          child: Text('Batal'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            if (_formKey.currentState!.validate()) {
+              sendResetPasswordEmail(_emailController.text);
+            }
+          },
+          child: Text('Kirim'),
+        ),
+      ],
+    );
   }
 }
